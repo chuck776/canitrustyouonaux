@@ -1,0 +1,74 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+
+}
+
+datasource db {
+  provider = "postgresql"
+
+}
+enum TimeRange {
+  SHORT_TERM
+  MEDIUM_TERM
+  LONG_TERM
+}
+//https://127.0.0.1:3000/api/auth/login
+model SpotifyUser {
+  id                  String   @id
+  displayName         String
+  imageUrl            String?
+  spotifyAccessToken  String
+  spotifyRefreshToken String
+  tokenExpiresAt      DateTime
+
+  musicProfiles       UserMusicProfile[]
+  comparisonsAsUserA  Comparison[] @relation("UserA")
+  comparisonsAsUserB  Comparison[] @relation("UserB")
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+model UserMusicProfile {
+  id                 String   @id @default(uuid())
+  userId             String
+  timeRange          TimeRange
+
+  genreVector        Json
+  audioProfile       Json
+  topArtistIds       Json
+  followedArtistIds  Json
+
+  fetchedAt          DateTime @default(now())
+
+  user               SpotifyUser @relation(fields: [userId], references: [id])
+
+  @@unique([userId, timeRange])
+}
+
+model Comparison {
+  id                   String   @id @default(uuid())
+  userAId              String
+  userBId              String
+  timeRange            TimeRange
+
+  genreScore           Float
+  artistScore          Float
+  audioScore           Float
+  followedArtistScore  Float
+  finalScore           Float
+
+  userA                SpotifyUser @relation("UserA", fields: [userAId], references: [id])
+  userB                SpotifyUser @relation("UserB", fields: [userBId], references: [id])
+
+  createdAt            DateTime @default(now())
+
+  @@index([userAId, userBId, timeRange])
+}
