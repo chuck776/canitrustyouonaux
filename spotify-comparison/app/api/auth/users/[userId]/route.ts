@@ -1,4 +1,4 @@
-// app/api/users/[userId]/route.ts
+// app/api/auth/users/[userId]/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
@@ -7,11 +7,13 @@ export const dynamic = "force-dynamic";
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }  // ← Promise now
 ) {
   try {
+    const { userId } = await params;  // ← must await it
+
     const user = await prisma.spotifyUser.findUnique({
-      where: { id: params.userId },
+      where: { id: userId },
       select: {
         id: true,
         displayName: true,
